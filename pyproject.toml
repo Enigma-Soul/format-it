@@ -1,6 +1,6 @@
 [project]
 name = "format-it"
-version = "0.1.0"
+version = "0.1.1"
 description = "将 Word 文档按 GB/T 9704 国家公文标准进行格式化"
 requires-python = ">=3.12"
 dependencies = [

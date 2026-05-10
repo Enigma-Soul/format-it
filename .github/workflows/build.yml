@@ -1,0 +1,51 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          # Check if tag already exists
+          if git tag -l "v$VERSION" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install uv
+        if: steps.version.outputs.exists == 'false'
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        if: steps.version.outputs.exists == 'false'
+        run: uv python install
+
+      - name: Install dependencies
+        if: steps.version.outputs.exists == 'false'
+        run: uv sync
+
+      - name: Build with PyInstaller
+        if: steps.version.outputs.exists == 'false'
+        run: uv run pyinstaller --noconfirm --onefile --name format-it main.py
+
+      - name: Create release
+        if: steps.version.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          files: dist/format-it.exe
