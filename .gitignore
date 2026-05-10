@@ -29,6 +29,11 @@ test/
 # Claude
 .claude/
 
+# PyInstaller
+build/
+dist/
+*.spec
+
 # Ruff / mypy
 .ruff_cache/
 .mypy_cache/

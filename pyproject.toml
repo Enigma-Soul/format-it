@@ -9,3 +9,8 @@ dependencies = [
     "tomli-w>=1.0.0",
     "rich>=15.0.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.20.0",
+]
