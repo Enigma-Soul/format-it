@@ -21,7 +21,6 @@ class WordReader:
         image_dir.mkdir(parents=True, exist_ok=True)
 
         paragraphs: list[ParagraphNode] = []
-        img_counter = 0
 
         # Extract images from relationships
         image_map = self._extract_all_images(doc, image_dir)
@@ -53,12 +52,10 @@ class WordReader:
                 text=text,
                 runs=runs,
                 images=para_images,
-                raw_xml_element=para._element,
             )
             paragraphs.append(node)
 
         # Handle tables
-        table_idx = 0
         for table in doc.tables:
             table_md = self._table_to_markdown(table)
             node = ParagraphNode(
@@ -67,7 +64,6 @@ class WordReader:
                 text=table_md,
             )
             paragraphs.append(node)
-            table_idx += 1
 
         return DocumentStructure(
             paragraphs=paragraphs,

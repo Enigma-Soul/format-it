@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 
 from libs.config import FormatConfig
-from libs.models import DocumentStructure, ParagraphNode, ParagraphRole
+from libs.fonts import FontResolver
+from libs.models import DocumentStructure, HEADING_ROLES, ParagraphNode, ParagraphRole
 
 ROLE_TO_MD_LEVEL: dict[ParagraphRole, int] = {
     ParagraphRole.TITLE: 1,
+    ParagraphRole.SUBTITLE: 1,
     ParagraphRole.HEADING_1: 2,
     ParagraphRole.HEADING_2: 3,
     ParagraphRole.HEADING_3: 4,
@@ -37,22 +39,10 @@ class MarkdownWriter:
                 level = ROLE_TO_MD_LEVEL[node.role]
                 prefix = "#" * level
                 lines.append(f"{prefix} {node.text}")
-            elif node.role == ParagraphRole.BODY:
-                if node.images:
-                    for img_path in node.images:
-                        lines.append(f"![image]({img_path})")
-                elif node.text.strip():
-                    lines.append(node.text)
-            elif node.role in (ParagraphRole.RECIPIENT, ParagraphRole.ATTACHMENT_NOTE,
-                               ParagraphRole.SIGNATURE, ParagraphRole.DATE,
-                               ParagraphRole.HEADER, ParagraphRole.FOOTER):
-                if node.text.strip():
-                    lines.append(node.text)
-            else:
-                if node.text.strip():
-                    lines.append(node.text)
+            elif node.text.strip():
+                lines.append(node.text)
 
-            if node.images and node.role != ParagraphRole.BODY:
+            if node.images:
                 for img_path in node.images:
                     lines.append(f"![image]({img_path})")
 
@@ -67,14 +57,13 @@ class MarkdownWriter:
             "paragraphs": [],
         }
         for node in doc.paragraphs:
+            spec = self._config.font_for_role(node.role, node.heading_level)
             para_meta: dict = {
                 "idx": node.index,
                 "role": node.role.name,
+                "font": FontResolver.normalize(spec.name),
+                "size_pt": spec.size_pt,
             }
-            if node.runs:
-                first_font = node.runs[0].font
-                para_meta["font"] = first_font.name
-                para_meta["size_pt"] = first_font.size_pt
             if node.heading_level:
                 para_meta["heading_level"] = node.heading_level
             meta["paragraphs"].append(para_meta)

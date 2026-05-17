@@ -20,7 +20,8 @@ venv/
 output/
 tmp/
 input/
-config.toml
+configs/*
+!configs/default.toml
 test/
 
 # Python version file (local)

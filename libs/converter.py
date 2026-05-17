@@ -6,7 +6,7 @@ from libs.config import FormatConfig
 from libs.heading_detector import HeadingDetector
 from libs.md_reader import MarkdownReader
 from libs.md_writer import MarkdownWriter
-from libs.models import DocumentStructure, ParagraphRole
+from libs.models import DocumentStructure
 from libs.user_interaction import UserInteraction
 from libs.word_reader import WordReader
 from libs.word_writer import WordWriter
@@ -70,8 +70,14 @@ class FormatConverter:
             return
 
         file_names = [f.name for f in files]
-        idx = self._ui.select_input_file(file_names)
-        self.run_full_pipeline(files[idx])
+        indices = self._ui.select_input_files(file_names)
+        if not indices:
+            self._ui.display_progress("已取消")
+            return
+
+        for idx in indices:
+            self._ui.display_progress(f"\n正在处理: {files[idx].name}")
+            self.run_full_pipeline(files[idx])
 
     # --- Internal pipeline stages ---
 
@@ -82,7 +88,7 @@ class FormatConverter:
         return reader.read(path)
 
     def _detect_and_resolve(self, doc: DocumentStructure) -> DocumentStructure:
-        use_font, use_seq, use_len, _ = self._ui.choose_detection_methods()
+        use_font, use_seq, use_len = self._ui.choose_detection_methods()
 
         # Override config detection settings
         detector = HeadingDetector(self._config)
@@ -98,7 +104,7 @@ class FormatConverter:
         self._ui.display_progress("正在解决冲突...")
         headings = detector.resolve_conflicts(headings, self._ui)
 
-        doc = detector.apply_to_document(doc, headings)
+        doc = detector.apply_to_document(doc, headings, self._ui)
 
         self._ui.display_progress("正在格式化序号...")
         detector.normalize_heading_sequences(doc.paragraphs)
@@ -107,4 +113,4 @@ class FormatConverter:
 
     def _ensure_directories(self) -> None:
         for d in [self._config.input_dir, self._config.output_dir, self._config.tmp_dir]:
-            Path(d).mkdir(parents=True, exist_ok=True)
+            d.mkdir(parents=True, exist_ok=True)

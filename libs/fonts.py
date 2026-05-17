@@ -4,9 +4,9 @@ from __future__ import annotations
 class FontResolver:
     FONT_ALIASES: dict[str, list[str]] = {
         "方正小标宋简体": ["FZXiaoBiaoSong-B05S", "方正小标宋简体"],
-        "仿宋_GB2312": ["FangSong_GB2312", "仿宋_GB2312", "FangSong", "fangsong"],
+        "仿宋_GB2312": ["FangSong_GB2312", "仿宋_GB2312", "方正仿宋_GBK", "FangSong", "仿宋", "fangsong", "FangSong_GB2312"],
         "黑体": ["SimHei", "黑体", "simhei"],
-        "楷体_GB2312": ["KaiTi_GB2312", "楷体_GB2312", "KaiTi", "kaiti"],
+        "楷体_GB2312": ["KaiTi_GB2312", "楷体_GB2312", "方正楷体_GBK", "KaiTi", "楷体", "kaiti", "KaiTi_GB2312"],
         "宋体": ["SimSun", "宋体", "NSimSun", "simsun"],
     }
 

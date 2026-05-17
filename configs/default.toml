@@ -1,0 +1,90 @@
+[project]
+name = "默认公文标准"
+description = "GB/T 9704 国家公文格式标准"
+
+[paper]
+size = "A4"
+width_mm = 210.0
+height_mm = 297.0
+margin_top_mm = 37.0
+margin_bottom_mm = 35.0
+margin_left_mm = 28.0
+margin_right_mm = 26.0
+footer_distance_mm = 28.0
+
+[fonts]
+number_font = "Times New Roman"
+
+[fonts.title]
+name = "方正小标宋简体"
+size_pt = 22.0
+alt_name = "SimSun"
+bold = false
+
+[fonts.subtitle]
+name = "仿宋_GB2312"
+size_pt = 16.0
+alt_name = "FangSong"
+bold = false
+
+[fonts.body]
+name = "仿宋_GB2312"
+size_pt = 16.0
+alt_name = "FangSong"
+chars_per_line = 28
+lines_per_page = 22
+line_spacing_pt = 28.9
+space_before_pt = 0.0
+space_after_pt = 0.0
+
+[fonts.heading_1]
+name = "黑体"
+size_pt = 16.0
+alt_name = "SimHei"
+sequence_pattern = "^[一二三四五六七八九十]+、"
+bold = false
+indent = false
+
+[fonts.heading_2]
+name = "楷体_GB2312"
+size_pt = 16.0
+alt_name = "KaiTi"
+sequence_pattern = "^（[一二三四五六七八九十]+）"
+bold = false
+indent = false
+
+[fonts.heading_3]
+name = "仿宋_GB2312"
+size_pt = 16.0
+alt_name = "FangSong"
+sequence_pattern = "^\\d+[.．]"
+bold = false
+indent = false
+
+[fonts.heading_4]
+name = "仿宋_GB2312"
+size_pt = 16.0
+alt_name = "FangSong"
+sequence_pattern = "^（\\d+）"
+bold = false
+indent = false
+
+[page_number]
+enabled = true
+format = "— 1 —"
+font_name = "SimSun"
+size_pt = 14.0
+odd_align = "right"
+even_align = "left"
+
+[detection]
+line_length_threshold = 7
+use_font_size_detection = true
+use_sequence_number_detection = true
+use_line_length_detection = true
+font_size_tolerance_pt = 1.0
+
+[paths]
+input_dir = "input"
+output_dir = "output"
+tmp_dir = "tmp"

@@ -5,17 +5,19 @@
 ## 功能
 
 - 读取 Word 文档，自动检测标题级别（字体大小 / 序号格式 / 行内字数）
-- 冲突标题由用户手动确认
 - 自动格式化标题序号（`一、` / `（二）` / `3.` / `（4）`）
 - 导出为 Markdown 供用户检查编辑
 - 按公文标准回写为格式化 Word 文件（页边距、字体、字号、行距、缩进）
+- Web UI 在线编辑 Markdown，支持暗色模式
+- 无交互命令行模式，支持自动化批处理
 
 ## 目录结构
 
 ```
 format-it/
-├── main.py          # 入口
-├── libs/            # 核心库
+├── main.py              # Web UI 入口
+├── cli.py               # 命令行入口（无交互）
+├── libs/                # 核心库
 │   ├── config.py            # TOML 配置（GB/T 9704 默认值）
 │   ├── converter.py         # 主转换类，编排流水线
 │   ├── heading_detector.py  # 标题检测 + 序号格式化
@@ -23,15 +25,19 @@ format-it/
 │   ├── word_writer.py       # Word 写入
 │   ├── md_writer.py         # Markdown 写入
 │   ├── md_reader.py         # Markdown 读取
-│   ├── user_interaction.py  # 用户交互接口
-│   ├── tui.py               # TUI 组件（MultiSelect / Tabs）
+│   ├── user_interaction.py  # 交互接口 + 自动/静默/打印实现
 │   ├── fonts.py             # 中文字体映射
 │   └── models.py            # 数据模型
-├── input/           # 放入待处理的 .docx 文件
-├── output/          # 格式化后的 .docx 输出
-├── tmp/             # 中间 .md 缓存
-├── config.toml      # 自动生成的配置文件
-└── format.txt       # GB/T 9704 公文标准参考
+├── web/                 # Web UI
+│   ├── app.py               # FastAPI 应用工厂
+│   ├── routes.py            # API 路由
+│   ├── sessions.py          # 会话管理
+│   └── static/              # 前端静态文件
+│       ├── index.html
+│       ├── css/style.css
+│       └── js/app.js
+├── configs/             # 配置文件（TOML）
+└── .github/workflows/   # CI/CD
 ```
 
 ## 安装
@@ -44,26 +50,29 @@ uv sync
 
 ## 使用
 
+### Web UI（默认）
+
 ```bash
-# 交互模式 — 选择 input/ 中的文件
-uv run python main.py
+uv run python main.py                    # 启动 http://127.0.0.1:8000
+uv run python main.py --public           # 监听所有接口
+uv run python main.py --port 9000        # 自定义端口
+```
 
-# 处理指定文件
-uv run python main.py input/report.docx
+在浏览器中上传 `.docx` 文件，编辑生成的 Markdown，点击生成并下载格式化文档。
 
-# 仅生成 Markdown（不回写 Word）
-uv run python main.py input/report.docx --md-only
+### 命令行
 
-# 从 Markdown 直接生成 Word
-uv run python main.py --from-md tmp/report.md
-
-# 生成默认配置文件
-uv run python main.py --init-config
+```bash
+uv run python cli.py input.docx              # 全流程自动
+uv run python cli.py --md-only input.docx    # 仅生成 Markdown
+uv run python cli.py --from-md edited.md     # 从 Markdown 生成 Word
+uv run python cli.py -c custom.toml input.docx  # 指定配置
+uv run python cli.py --init-config           # 生成默认配置
 ```
 
 ## 配置
 
-首次运行会自动生成 `config.toml`，包含 GB/T 9704 默认值：
+配置文件位于 `configs/`，首次使用可通过 `--init-config` 生成。默认配置遵循 GB/T 9704：
 
 | 项目 | 默认值 |
 |------|--------|
@@ -86,13 +95,12 @@ uv run python main.py --init-config
 Word 文档
   ↓ WordReader（提取段落、字体、图片）
   ↓ HeadingDetector（三种策略检测标题）
-  ↓ 冲突解决（用户确认）
   ↓ 序号格式化（一、/（二）/3./（4））
-  ↓ MarkdownWriter → tmp/*.md
-  ↓ 用户检查编辑
+  ↓ MarkdownWriter → .md 文件
+  ↓ 用户检查编辑（Web UI 或外部编辑器）
   ↓ MarkdownReader
   ↓ WordWriter（应用 GB/T 9704 格式）
-  ↓ output/*.docx
+  ↓ 格式化 .docx
 ```
 
 ## License

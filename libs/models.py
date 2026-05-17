@@ -8,6 +8,7 @@ from typing import Optional
 
 class ParagraphRole(Enum):
     TITLE = auto()
+    SUBTITLE = auto()
     HEADING_1 = auto()
     HEADING_2 = auto()
     HEADING_3 = auto()
@@ -24,6 +25,12 @@ class ParagraphRole(Enum):
     UNKNOWN = auto()
 
 
+HEADING_ROLES = frozenset({
+    ParagraphRole.HEADING_1, ParagraphRole.HEADING_2,
+    ParagraphRole.HEADING_3, ParagraphRole.HEADING_4,
+})
+
+
 @dataclass
 class FontInfo:
     name: str
@@ -37,8 +44,6 @@ class FontInfo:
 class InlineRun:
     text: str
     font: FontInfo
-    is_page_break: bool = False
-    is_line_break: bool = False
 
 
 @dataclass
@@ -46,13 +51,11 @@ class DetectedHeading:
     paragraph_index: int
     text: str
     char_count: int
-    detected_font_size: Optional[float] = None
     detected_font_name: Optional[str] = None
     sequence_match_level: Optional[int] = None
     font_size_match_level: Optional[int] = None
     line_length_match: bool = False
     final_level: Optional[int] = None
-    needs_user_confirmation: bool = False
 
 
 @dataclass
@@ -63,7 +66,6 @@ class ParagraphNode:
     runs: list[InlineRun] = field(default_factory=list)
     heading_level: Optional[int] = None
     images: list[Path] = field(default_factory=list)
-    raw_xml_element: Optional[object] = None
 
 
 @dataclass

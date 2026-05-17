@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>格式化公文工具</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>格式化公文工具</h1>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">☾</button>
+</header>
+
+<div class="main">
+  <div class="left">
+    <div>
+      <label>配置文件</label>
+      <select id="configSelect"></select>
+    </div>
+
+    <div>
+      <label>选择文件</label>
+      <div class="drop-zone" id="dropZone">
+        <div>拖拽 .docx 文件到此处<br>或点击选择</div>
+        <input type="file" id="fileInput" accept=".docx">
+      </div>
+      <div class="file-name" id="fileName"></div>
+    </div>
+
+    <button class="btn-primary" id="convertBtn" disabled>转换为 Markdown</button>
+
+    <div class="status" id="statusArea"></div>
+
+    <button class="btn-success" id="generateBtn" disabled>生成格式化文档</button>
+
+    <div class="download-area" id="downloadArea" style="display:none">
+      <a id="downloadLink" href="#">下载文件</a>
+    </div>
+
+    <div class="hint">
+      Markdown 标题级别对照：<br>
+      <code>#</code> 总标题 / 副标题 &nbsp;
+      <code>##</code> 一级（一、） &nbsp;
+      <code>###</code> 二级（（二））<br>
+      <code>####</code> 三级（3.） &nbsp;
+      <code>#####</code> 四级（（4））
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="right-header">
+      <span>Markdown 源代码（可编辑）</span>
+    </div>
+    <textarea id="mdEditor" placeholder="上传文档后，Markdown 源码将显示在此处..." spellcheck="false"></textarea>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
