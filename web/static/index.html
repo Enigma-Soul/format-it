@@ -4,56 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>格式化公文工具</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f5f5f5; color: #333; }
-
-header { padding: 12px 24px; background: #fff; border-bottom: 1px solid #e0e0e0; font-size: 16px; font-weight: 600; color: #1a1a1a; }
-
-.main { display: flex; flex: 1; overflow: hidden; }
-
-.left { width: 320px; min-width: 320px; background: #fafafa; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px; gap: 16px; overflow-y: auto; }
-
-.right { flex: 1; display: flex; flex-direction: column; background: #fff; }
-
-.right-header { padding: 12px 20px; border-bottom: 1px solid #e0e0e0; font-size: 14px; color: #666; display: flex; justify-content: space-between; align-items: center; }
-
-textarea { flex: 1; border: none; padding: 16px 20px; font-family: "Cascadia Code", "Fira Code", "Source Code Pro", "Consolas", monospace; font-size: 14px; line-height: 1.6; resize: none; outline: none; color: #333; }
-
-label { font-size: 13px; color: #666; font-weight: 500; }
-
-select { width: 100%; padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; background: #fff; font-size: 14px; color: #333; cursor: pointer; outline: none; }
-select:focus { border-color: #4a90d9; }
-
-.drop-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 24px 16px; text-align: center; color: #999; font-size: 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-.drop-zone:hover, .drop-zone.drag-over { border-color: #4a90d9; background: #f0f7ff; color: #4a90d9; }
-.drop-zone input { display: none; }
-
-.file-name { font-size: 13px; color: #4a90d9; word-break: break-all; }
-
-button { padding: 10px 0; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s, opacity 0.2s; width: 100%; }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.btn-primary { background: #4a90d9; color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #3a7bc8; }
-
-.btn-success { background: #52c41a; color: #fff; }
-.btn-success:hover:not(:disabled) { background: #45a817; }
-
-.status { font-size: 12px; color: #999; line-height: 1.5; max-height: 120px; overflow-y: auto; }
-.status .log-line { padding: 2px 0; }
-.status .error { color: #e74c3c; }
-
-.hint { font-size: 12px; color: #aaa; }
-
-.download-area { display: flex; align-items: center; gap: 8px; }
-.download-area a { color: #4a90d9; text-decoration: none; font-size: 14px; }
-.download-area a:hover { text-decoration: underline; }
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<header>格式化公文工具</header>
+<header>
+  <h1>格式化公文工具</h1>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">☾</button>
+</header>
 
 <div class="main">
   <div class="left">
@@ -81,144 +39,24 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <a id="downloadLink" href="#">下载文件</a>
     </div>
 
-    <div class="hint">提示：元数据注释已自动隐藏，编辑 Markdown 后点击生成</div>
+    <div class="hint">
+      Markdown 标题级别对照：<br>
+      <code>#</code> 总标题 / 副标题 &nbsp;
+      <code>##</code> 一级（一、） &nbsp;
+      <code>###</code> 二级（（二））<br>
+      <code>####</code> 三级（3.） &nbsp;
+      <code>#####</code> 四级（（4））
+    </div>
   </div>
 
   <div class="right">
     <div class="right-header">
       <span>Markdown 源代码（可编辑）</span>
-      <span class="hint">元数据已隐藏</span>
     </div>
     <textarea id="mdEditor" placeholder="上传文档后，Markdown 源码将显示在此处..." spellcheck="false"></textarea>
   </div>
 </div>
 
-<script>
-const $ = id => document.getElementById(id);
-let sessionId = null;
-
-async function loadConfigs() {
-  const res = await fetch('/api/configs');
-  const data = await res.json();
-  const sel = $('configSelect');
-  sel.innerHTML = '';
-  data.configs.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.filename;
-    opt.textContent = c.name;
-    sel.appendChild(opt);
-  });
-}
-
-function setStatus(logs, error) {
-  const area = $('statusArea');
-  area.innerHTML = logs.map(l => `<div class="log-line">${escapeHtml(l)}</div>`).join('');
-  if (error) {
-    area.innerHTML += `<div class="log-line error">${escapeHtml(error)}</div>`;
-  }
-  area.scrollTop = area.scrollHeight;
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-async function upload() {
-  const fileInput = $('fileInput');
-  if (!fileInput.files.length) return;
-
-  const file = fileInput.files[0];
-  const config = $('configSelect').value;
-
-  $('convertBtn').disabled = true;
-  $('generateBtn').disabled = true;
-  $('downloadArea').style.display = 'none';
-  $('mdEditor').value = '';
-  setStatus([`正在上传: ${file.name}...`]);
-
-  const form = new FormData();
-  form.append('file', file);
-  form.append('config', config);
-
-  try {
-    const res = await fetch('/api/upload', { method: 'POST', body: form });
-    if (!res.ok) {
-      const err = await res.json();
-      setStatus([], err.detail || '上传失败');
-      $('convertBtn').disabled = false;
-      return;
-    }
-    const data = await res.json();
-    sessionId = data.session_id;
-    $('mdEditor').value = data.markdown;
-    setStatus(data.log || []);
-    $('generateBtn').disabled = false;
-    $('convertBtn').disabled = false;
-  } catch (e) {
-    setStatus([], e.message);
-    $('convertBtn').disabled = false;
-  }
-}
-
-async function generate() {
-  if (!sessionId) return;
-
-  $('generateBtn').disabled = true;
-  setStatus(['正在生成格式化文档...']);
-
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: sessionId, markdown: $('mdEditor').value }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      setStatus([], err.detail || '生成失败');
-      $('generateBtn').disabled = false;
-      return;
-    }
-    const data = await res.json();
-    $('downloadLink').href = data.download_url;
-    $('downloadLink').textContent = data.filename;
-    $('downloadLink').download = data.filename;
-    $('downloadArea').style.display = 'flex';
-    setStatus(['文档生成完毕，点击下载']);
-    $('generateBtn').disabled = false;
-  } catch (e) {
-    setStatus([], e.message);
-    $('generateBtn').disabled = false;
-  }
-}
-
-// Drop zone
-const dropZone = $('dropZone');
-const fileInput = $('fileInput');
-
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  fileInput.files = e.dataTransfer.files;
-  onFileSelected();
-});
-fileInput.addEventListener('change', onFileSelected);
-
-function onFileSelected() {
-  if (fileInput.files.length) {
-    $('fileName').textContent = fileInput.files[0].name;
-    $('convertBtn').disabled = false;
-  }
-}
-
-$('convertBtn').addEventListener('click', upload);
-$('generateBtn').addEventListener('click', generate);
-
-loadConfigs();
-</script>
+<script src="js/app.js"></script>
 </body>
 </html>
