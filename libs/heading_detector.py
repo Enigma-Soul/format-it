@@ -9,6 +9,7 @@ from libs.fonts import FontResolver
 from libs.models import (
     DetectedHeading,
     DocumentStructure,
+    HEADING_ROLES,
     ParagraphNode,
     ParagraphRole,
 )
@@ -61,7 +62,6 @@ class HeadingDetector:
                 paragraph_index=i,
                 text=para.text,
                 char_count=len(para.text),
-                detected_font_size=self._get_dominant_font_size(para),
                 detected_font_name=self._get_dominant_font_name(para),
                 sequence_match_level=seq_levels[i],
                 font_size_match_level=font_levels[i],
@@ -82,13 +82,9 @@ class HeadingDetector:
                 if font_lv == seq_lv:
                     h.final_level = font_lv
                 else:
-                    h.needs_user_confirmation = True
                     h.final_level = ui.confirm_heading_level(h, font_lv, seq_lv)
             elif font_lv is not None:
-                if h.line_length_match:
-                    h.final_level = font_lv
-                else:
-                    h.final_level = font_lv
+                h.final_level = font_lv
             elif seq_lv is not None:
                 h.final_level = seq_lv
             elif h.line_length_match:
@@ -105,14 +101,18 @@ class HeadingDetector:
         self,
         doc: DocumentStructure,
         headings: list[DetectedHeading],
+        ui: UserInteraction,
     ) -> DocumentStructure:
         for h in headings:
             para = doc.paragraphs[h.paragraph_index]
-            if h.final_level is None:
+            if h.final_level is None or h.final_level == 0:
                 para.role = ParagraphRole.BODY
                 para.heading_level = None
-            elif h.final_level == 0:
-                para.role = ParagraphRole.BODY
+            elif h.final_level == -1:
+                para.role = ParagraphRole.TITLE
+                para.heading_level = None
+            elif h.final_level == -2:
+                para.role = ParagraphRole.SUBTITLE
                 para.heading_level = None
             else:
                 para.role = HEADING_ROLE_MAP.get(h.final_level, ParagraphRole.BODY)
@@ -120,17 +120,18 @@ class HeadingDetector:
 
         # Detect title: largest font, first non-empty paragraph with title font
         self._detect_title(doc)
+        self._confirm_subtitle_after_title(doc, ui)
         return doc
 
     def normalize_heading_sequences(
         self,
         paragraphs: list[ParagraphNode],
-    ) -> list[ParagraphNode]:
+    ) -> None:
         counters: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0}
         for para in paragraphs:
             if para.heading_level is None or para.heading_level == 0:
                 continue
-            if para.role == ParagraphRole.TITLE:
+            if para.role in (ParagraphRole.TITLE, ParagraphRole.SUBTITLE):
                 continue
             level = para.heading_level
             counters[level] += 1
@@ -142,7 +143,6 @@ class HeadingDetector:
 
             if para.runs:
                 para.runs[0].text = new_seq + stripped
-        return paragraphs
 
     # --- Font size frequency ---
 
@@ -268,6 +268,46 @@ class HeadingDetector:
                 para.role = ParagraphRole.TITLE
                 para.heading_level = None
                 return
+
+    def _confirm_subtitle_after_title(self, doc: DocumentStructure, ui: UserInteraction) -> None:
+        title_idx = None
+        for i, para in enumerate(doc.paragraphs):
+            if para.role == ParagraphRole.TITLE:
+                title_idx = i
+                break
+        if title_idx is None:
+            return
+
+        # Collect subtitle candidates: non-empty paragraphs immediately after title
+        # Stop at the first real heading (H1-H4 with a sequence number) or BODY content
+        candidates: list[ParagraphNode] = []
+        for para in doc.paragraphs[title_idx + 1:]:
+            if not para.text.strip():
+                continue
+            # A heading with a matched sequence number is a real heading, stop here
+            if para.role in HEADING_ROLES and para.heading_level:
+                break
+            candidates.append(para)
+            break  # Only ask about the first non-empty paragraph
+
+        if not candidates:
+            return
+
+        candidate = candidates[0]
+        font_info = self._get_dominant_font_name(candidate)
+        result = ui.confirm_subtitle(
+            candidate.text.strip(),
+            font_info,
+        )
+        if result is None:
+            return
+        if result == -1:
+            candidate.role = ParagraphRole.TITLE
+        elif result == -2:
+            candidate.role = ParagraphRole.SUBTITLE
+        elif 1 <= result <= 4:
+            candidate.role = HEADING_ROLE_MAP.get(result, ParagraphRole.BODY)
+            candidate.heading_level = result
 
     # --- Sequence formatting helpers ---
 

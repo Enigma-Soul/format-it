@@ -19,7 +19,6 @@ jobs:
         run: |
           VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          # Check if tag already exists
           if git tag -l "v$VERSION" | grep -q .; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
@@ -40,7 +39,13 @@ jobs:
 
       - name: Build with PyInstaller
         if: steps.version.outputs.exists == 'false'
-        run: uv run pyinstaller --noconfirm --onefile --name format-it main.py
+        run: uv run pyinstaller --noconfirm --onedir --name format-it main.py
+
+      - name: Package as zip
+        if: steps.version.outputs.exists == 'false'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/format-it -DestinationPath dist/format-it_${{ steps.version.outputs.tag }}.zip
 
       - name: Create release
         if: steps.version.outputs.exists == 'false'
@@ -48,4 +53,4 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.tag }}
-          files: dist/format-it.exe
+          files: dist/format-it_${{ steps.version.outputs.tag }}.zip

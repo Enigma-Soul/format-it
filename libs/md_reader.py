@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from libs.config import FormatConfig
+from libs.fonts import FontResolver
 from libs.models import DocumentStructure, FontInfo, InlineRun, ParagraphNode, ParagraphRole
 
 MD_LEVEL_TO_ROLE: dict[int, ParagraphRole] = {
@@ -31,8 +32,7 @@ class MarkdownReader:
         content = path.read_text(encoding="utf-8")
         lines = content.split("\n")
 
-        metadata = self._parse_metadata(lines)
-        clean_lines = self._strip_metadata(lines)
+        metadata, clean_lines = self._extract_metadata(lines)
 
         paragraphs: list[ParagraphNode] = []
         idx = 0
@@ -72,6 +72,17 @@ class MarkdownReader:
                 level = len(m.group(1))
                 text = m.group(2)
                 role = MD_LEVEL_TO_ROLE.get(level, ParagraphRole.BODY)
+
+                # Restore exact role from metadata (e.g. SUBTITLE vs TITLE)
+                para_list = metadata.get("paragraphs", [])
+                if idx < len(para_list):
+                    meta_role = para_list[idx].get("role")
+                    if meta_role:
+                        try:
+                            role = ParagraphRole[meta_role]
+                        except KeyError:
+                            pass
+
                 heading_level = HEADING_ROLE_TO_LEVEL.get(role)
 
                 # Try to restore font info from metadata
@@ -104,7 +115,7 @@ class MarkdownReader:
             source_file=path,
         )
 
-    def _parse_metadata(self, lines: list[str]) -> dict:
+    def _extract_metadata(self, lines: list[str]) -> tuple[dict, list[str]]:
         start = None
         end = None
         for i, line in enumerate(lines):
@@ -114,25 +125,14 @@ class MarkdownReader:
                 end = i
                 break
         if start is None or end is None:
-            return {}
+            return {}, lines
         json_str = "\n".join(lines[start + 1:end])
         try:
-            return json.loads(json_str)
+            metadata = json.loads(json_str)
         except json.JSONDecodeError:
-            return {}
-
-    def _strip_metadata(self, lines: list[str]) -> list[str]:
-        start = None
-        end = None
-        for i, line in enumerate(lines):
-            if line.strip() == "<!-- format-it-meta":
-                start = i
-            if start is not None and line.strip() == "-->":
-                end = i
-                break
-        if start is None or end is None:
-            return lines
-        return lines[:start] + lines[end + 1:]
+            metadata = {}
+        clean_lines = lines[:start] + lines[end + 1:]
+        return metadata, clean_lines
 
     def _make_runs_from_meta(
         self, idx: int, metadata: dict, text: str,
@@ -140,7 +140,7 @@ class MarkdownReader:
         para_list = metadata.get("paragraphs", [])
         if idx < len(para_list):
             entry = para_list[idx]
-            font_name = entry.get("font", self._config.body_font.name)
+            font_name = FontResolver.normalize(entry.get("font", self._config.body_font.name))
             size_pt = entry.get("size_pt", self._config.body_font.size_pt)
         else:
             font_name = self._config.body_font.name
