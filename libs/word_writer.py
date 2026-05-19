@@ -88,48 +88,19 @@ class WordWriter:
         if not resolved_font:
             resolved_font = font_spec.alt_name or "SimSun"
 
-        parts = self._split_text_for_numbers(text)
+        run = para.add_run(text)
+        run.font.size = Pt(font_spec.size_pt)
+        run.font.bold = font_spec.bold
+        run.font.name = resolved_font
 
-        for part_text, is_number in parts:
-            run = para.add_run(part_text)
-            run.font.size = Pt(font_spec.size_pt)
-            run.font.bold = font_spec.bold
-            number_font = self._config.number_font
-            if is_number:
-                run.font.name = number_font
-            else:
-                run.font.name = resolved_font
-            rPr = run._element.get_or_add_rPr()
-            rFonts = rPr.find(_qn("w:rFonts"))
-            if rFonts is None:
-                rFonts = OxmlElement("w:rFonts")
-                rPr.insert(0, rFonts)
-            if is_number:
-                rFonts.set(_qn("w:ascii"), number_font)
-                rFonts.set(_qn("w:hAnsi"), number_font)
-                rFonts.set(_qn("w:eastAsia"), resolved_font)
-            else:
-                rFonts.set(_qn("w:ascii"), number_font)
-                rFonts.set(_qn("w:hAnsi"), number_font)
-                rFonts.set(_qn("w:eastAsia"), resolved_font)
-
-    @staticmethod
-    def _split_text_for_numbers(text: str) -> list[tuple[str, bool]]:
-        parts: list[tuple[str, bool]] = []
-        current = ""
-        in_number = False
-        for ch in text:
-            is_digit = ch.isdigit() or ch in ".,-%‰°"
-            if is_digit != in_number and current:
-                parts.append((current, in_number))
-                current = ""
-                in_number = is_digit
-            if not current:
-                in_number = is_digit
-            current += ch
-        if current:
-            parts.append((current, in_number))
-        return parts
+        rPr = run._element.get_or_add_rPr()
+        rFonts = rPr.find(_qn("w:rFonts"))
+        if rFonts is None:
+            rFonts = OxmlElement("w:rFonts")
+            rPr.insert(0, rFonts)
+        rFonts.set(_qn("w:ascii"), resolved_font)
+        rFonts.set(_qn("w:hAnsi"), resolved_font)
+        rFonts.set(_qn("w:eastAsia"), resolved_font)
 
     def _write_table(self, document: Document, md_text: str) -> None:
         lines = [l for l in md_text.split("\n") if l.strip()]
