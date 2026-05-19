@@ -25,7 +25,7 @@ uv run python cli.py -c custom.toml input.docx      # custom config
 uv run python cli.py --init-config                  # generate default.toml
 
 # Build (outputs to dist/format-it/)
-uv run pyinstaller --noconfirm --onedir --name format-it main.py
+uv run pyinstaller --noconfirm --onedir --name format-it --hidden-import web --hidden-import web.app --hidden-import web.routes --hidden-import web.sessions --hidden-import libs --hidden-import libs.config --hidden-import libs.converter --hidden-import libs.fonts --hidden-import libs.models --hidden-import libs.heading_detector --hidden-import libs.user_interaction --hidden-import libs.word_reader --hidden-import libs.md_writer --hidden-import libs.md_reader --hidden-import libs.word_writer --add-data "web/static;web/static" --add-data "configs;configs" main.py
 ```
 
 No test suite exists currently.

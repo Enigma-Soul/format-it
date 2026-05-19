@@ -39,7 +39,22 @@ jobs:
 
       - name: Build with PyInstaller
         if: steps.version.outputs.exists == 'false'
-        run: uv run pyinstaller --noconfirm --onedir --name format-it main.py
+        run: >
+          uv run pyinstaller --noconfirm --onedir --name format-it
+          --hidden-import web --hidden-import web.app --hidden-import web.routes --hidden-import web.sessions
+          --hidden-import libs --hidden-import libs.config --hidden-import libs.converter
+          --hidden-import libs.fonts --hidden-import libs.models --hidden-import libs.heading_detector
+          --hidden-import libs.user_interaction --hidden-import libs.word_reader
+          --hidden-import libs.md_writer --hidden-import libs.md_reader --hidden-import libs.word_writer
+          --add-data "web/static;web/static" --add-data "configs;configs"
+          main.py
+
+      - name: Copy docs to dist
+        if: steps.version.outputs.exists == 'false'
+        shell: pwsh
+        run: |
+          Copy-Item README.md dist/format-it/
+          Copy-Item LICENSE dist/format-it/
 
       - name: Package as zip
         if: steps.version.outputs.exists == 'false'

@@ -87,7 +87,6 @@ uv run python cli.py --init-config           # 生成默认配置
 | 二级标题 | 楷体_GB2312 16pt，序号 `（二）` |
 | 三级标题 | 仿宋_GB2312 16pt，序号 `3.` |
 | 四级标题 | 仿宋_GB2312 16pt，序号 `（4）` |
-| 数字字体 | Times New Roman |
 
 ## 流水线
 

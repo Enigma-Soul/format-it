@@ -126,7 +126,6 @@ function renderTabs() {
 function refreshUI() {
   const tab = getActiveTab();
   $('generateBtn').disabled = !tab;
-  $('downloadBtn').disabled = !tab || !tab.generated;
   $('formatBtn').disabled = !tab;
 }
 
@@ -183,23 +182,18 @@ async function generate() {
     }
     const data = await res.json();
     updateTabAfterGenerate(data.download_url, data.filename);
+    // Auto-download
+    const a = document.createElement('a');
+    a.href = data.download_url;
+    a.download = data.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     $('generateBtn').disabled = false;
   } catch (e) {
     showToast(e.message);
     $('generateBtn').disabled = false;
   }
-}
-
-// --- Download ---
-function downloadFile() {
-  const tab = getActiveTab();
-  if (!tab || !tab.generated || !tab.downloadUrl) return;
-  const a = document.createElement('a');
-  a.href = tab.downloadUrl;
-  a.download = tab.downloadFilename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
 }
 
 // --- Format ---
@@ -245,7 +239,6 @@ function escapeHtml(s) {
 // --- Event Listeners ---
 $('convertBtn').addEventListener('click', upload);
 $('generateBtn').addEventListener('click', generate);
-$('downloadBtn').addEventListener('click', downloadFile);
 $('formatBtn').addEventListener('click', formatMarkdown);
 $('tabBar').addEventListener('click', e => {
   const close = e.target.closest('.tab-close');
