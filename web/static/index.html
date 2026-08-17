@@ -4,55 +4,117 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>格式化公文工具</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12.5' fill='none' stroke='%23B4272D' stroke-width='3'/%3E%3Cpath d='M16 9.5l1.7 5h5.2l-4.2 3.1 1.6 5.1-4.3-3.1-4.3 3.1 1.6-5.1-4.2-3.1h5.2z' fill='%23B4272D'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<header>
-  <h1>格式化公文工具</h1>
-  <button class="theme-toggle" id="themeToggle" title="切换主题">☾</button>
+<header class="app-header">
+  <div class="brand">
+    <h1 class="brand-name">格式化公文工具</h1>
+    <span class="brand-tag">GB/T 9704</span>
+  </div>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换深浅主题">☾</button>
+  <div class="red-rule" aria-hidden="true"></div>
 </header>
 
 <div class="main">
-  <div class="left">
-    <div>
-      <label>配置文件</label>
-      <select id="configSelect"></select>
-    </div>
+  <aside class="sidebar">
+    <section class="panel">
+      <h2 class="sec-title"><i>一、</i>选择配置</h2>
+      <select id="configSelect" aria-label="格式配置"></select>
+    </section>
 
-    <div>
-      <label>选择文件</label>
-      <div class="drop-zone" id="dropZone">
-        <div>拖拽 .docx 文件到此处<br>或点击选择</div>
-        <input type="file" id="fileInput" accept=".docx" multiple>
+    <section class="panel">
+      <h2 class="sec-title"><i>二、</i>上传文档</h2>
+      <div class="drop-zone" id="dropZone" role="button" tabindex="0"
+           aria-label="上传 .docx 文件,拖拽或点击选择">
+        <svg class="doc-icon" viewBox="0 0 48 60" aria-hidden="true">
+          <path d="M6 3h24l12 12v42a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M30 3v12h12" fill="none" stroke="currentColor" stroke-width="2"/>
+          <line x1="12" y1="26" x2="36" y2="26" stroke="currentColor" stroke-width="3"/>
+          <line x1="16" y1="34" x2="32" y2="34" stroke="currentColor" stroke-width="2" opacity=".45"/>
+          <line x1="16" y1="41" x2="32" y2="41" stroke="currentColor" stroke-width="2" opacity=".45"/>
+          <line x1="16" y1="48" x2="27" y2="48" stroke="currentColor" stroke-width="2" opacity=".45"/>
+        </svg>
+        <p class="drop-main">拖入 .docx 文件</p>
+        <p class="drop-sub">或点击选择 · 支持多份</p>
+        <input type="file" id="fileInput" accept=".docx" multiple hidden>
       </div>
-      <div class="file-name" id="fileName"></div>
+      <ul class="file-list" id="fileList"></ul>
+      <button class="btn btn-primary" id="convertBtn" type="button" disabled>转换为 Markdown</button>
+    </section>
+
+    <section class="panel-note">
+      <h3 class="note-title">标题级别对照</h3>
+      <ul class="hint">
+        <li><code>#</code> 总标题 / 副标题</li>
+        <li><code>##</code> 一级(一、)</li>
+        <li><code>###</code> 二级((二))</li>
+        <li><code>####</code> 三级(3.)</li>
+        <li><code>#####</code> 四级((4))</li>
+      </ul>
+    </section>
+  </aside>
+
+  <main class="workbench">
+    <div class="workbench-header">
+      <div class="tab-bar" id="tabBar" role="tablist" aria-label="文档标签"></div>
+      <div class="workbench-actions">
+        <button class="btn btn-ghost" id="formatBtn" type="button" disabled>一键整理</button>
+        <button class="btn btn-seal" id="generateBtn" type="button" disabled>生成并下载</button>
+      </div>
     </div>
 
-    <button class="btn-primary" id="convertBtn" disabled>转换为 Markdown</button>
+    <div class="editor-wrap">
+      <textarea id="mdEditor" spellcheck="false" aria-label="Markdown 源码编辑器"
+                placeholder="Markdown 源码将在此显示"></textarea>
 
-    <button class="btn-success" id="generateBtn" disabled>生成并下载</button>
+      <div class="editor-overlay" id="editorOverlay" aria-hidden="true">
+        <div class="overlay-inner" id="overlayWelcome">
+          <svg class="blank-doc" viewBox="0 0 96 120" aria-hidden="true">
+            <rect x="1.5" y="1.5" width="93" height="117" rx="5" fill="var(--paper)" stroke="var(--line)"/>
+            <rect x="18" y="18" width="60" height="6" rx="1" fill="var(--red)" opacity=".8"/>
+            <rect x="28" y="30" width="40" height="4.5" rx="1" fill="var(--red)" opacity=".5"/>
+            <rect x="14" y="44" width="68" height="2" fill="var(--red)"/>
+            <rect x="14" y="56" width="68" height="3" rx="1.5" fill="var(--line)"/>
+            <rect x="14" y="66" width="60" height="3" rx="1.5" fill="var(--line)"/>
+            <rect x="14" y="76" width="64" height="3" rx="1.5" fill="var(--line)"/>
+            <rect x="14" y="86" width="46" height="3" rx="1.5" fill="var(--line)"/>
+          </svg>
+          <p class="ov-title">尚未打开文档</p>
+          <p class="ov-sub">将 Word 公文拖入左侧上传区,转换后在此审阅修订,再生成规范公文。</p>
+        </div>
+        <div class="overlay-inner" id="overlayPending" hidden>
+          <span class="ov-spinner" aria-hidden="true"></span>
+          <p class="ov-title">正在转换</p>
+          <p class="ov-sub" id="pendingName"></p>
+        </div>
+      </div>
 
-    <div class="hint">
-      Markdown 标题级别对照：<br>
-      <code>#</code> 总标题 / 副标题 &nbsp;
-      <code>##</code> 一级（一、） &nbsp;
-      <code>###</code> 二级（（二））<br>
-      <code>####</code> 三级（3.） &nbsp;
-      <code>#####</code> 四级（（4））
+      <div class="seal-layer" id="sealLayer" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <path id="sealArc" d="M 16 60 a 44 44 0 1 1 88 0"/>
+          </defs>
+          <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="4"/>
+          <circle cx="60" cy="60" r="49" fill="none" stroke="currentColor" stroke-width="1"/>
+          <text class="seal-text" font-size="12.5" letter-spacing="2.5" fill="currentColor">
+            <textPath href="#sealArc" startOffset="50%" text-anchor="middle">格式化公文工具</textPath>
+          </text>
+          <polygon points="60,49 63.4,59.4 74.3,59.4 65.4,65.8 68.8,76.1 60,69.7 51.2,76.1 54.6,65.8 45.7,59.4 56.6,59.4" fill="currentColor"/>
+        </svg>
+      </div>
     </div>
-  </div>
 
-  <div class="right">
-    <div class="right-header">
-      <span>Markdown 源代码（可编辑）</span>
-      <button class="btn-format" id="formatBtn" disabled>一键整理</button>
-    </div>
-    <div class="tab-bar" id="tabBar"></div>
-    <textarea id="mdEditor" placeholder="上传文档后，Markdown 源码将显示在此处..." spellcheck="false"></textarea>
-  </div>
+    <footer class="status-line">
+      <span id="statusText">—</span>
+      <span class="status-kbd">Ctrl + Enter 生成并下载</span>
+    </footer>
+  </main>
 </div>
-<div id="toastContainer" class="toast-container"></div>
+
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
 <script src="js/app.js"></script>
 </body>

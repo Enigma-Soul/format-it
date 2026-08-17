@@ -50,10 +50,7 @@ class FormatConverter:
     def run_full_pipeline(self, input_path: Path) -> Path:
         md_path = self.convert_word_to_markdown(input_path)
 
-        self._ui.prompt_continue(
-            f"请检查 Markdown 文件: {md_path}\n"
-            "编辑完成后按 Enter 继续..."
-        )
+        self._ui.prompt_continue(f"请检查 Markdown 文件: {md_path}\n编辑完成后按 Enter 继续...")
 
         output_path = self._config.output_dir / f"{input_path.stem}_formatted.docx"
         return self.convert_markdown_to_word(md_path, output_path)

@@ -52,10 +52,6 @@ class SessionManager:
 
     def cleanup_expired(self) -> None:
         now = time.time()
-        expired = [
-            sid
-            for sid, s in self._sessions.items()
-            if now - s.created_at > self._max_age
-        ]
+        expired = [sid for sid, s in self._sessions.items() if now - s.created_at > self._max_age]
         for sid in expired:
             self.remove(sid)

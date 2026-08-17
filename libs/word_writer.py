@@ -8,7 +8,7 @@ from docx.shared import Mm, Pt
 
 from libs.config import FormatConfig
 from libs.fonts import FontResolver
-from libs.models import DocumentStructure, HEADING_ROLES, ParagraphNode, ParagraphRole
+from libs.models import DocumentStructure, ParagraphNode, ParagraphRole
 
 
 class WordWriter:
@@ -103,7 +103,7 @@ class WordWriter:
         rFonts.set(_qn("w:eastAsia"), resolved_font)
 
     def _write_table(self, document: Document, md_text: str) -> None:
-        lines = [l for l in md_text.split("\n") if l.strip()]
+        lines = [line for line in md_text.split("\n") if line.strip()]
         if not lines:
             return
         # Parse markdown table
@@ -156,15 +156,17 @@ class WordWriter:
         sect_pr = section._sectPr
         even_footer_ref = sect_pr.find(qn("w:footerReference[@type='even']"))
         if even_footer_ref is None:
-            from lxml import etree
-            from docx.opc.part import Part
             from docx.opc.packuri import PackURI
+            from docx.opc.part import Part
+            from lxml import etree
 
             ftr_tag = OxmlElement("w:ftr")
             p_el = OxmlElement("w:p")
             self._build_page_number_xml(p_el, pn.even_align, pn, qn, OxmlElement)
             ftr_tag.append(p_el)
-            even_xml_bytes = etree.tostring(ftr_tag, xml_declaration=True, encoding="UTF-8", standalone=True)
+            even_xml_bytes = etree.tostring(
+                ftr_tag, xml_declaration=True, encoding="UTF-8", standalone=True
+            )
 
             even_partname = PackURI(odd_footer.part.partname.replace("/footer", "/footerEven"))
 
@@ -198,13 +200,17 @@ class WordWriter:
         ]:
             idx = fmt.find(char)
             if idx != -1:
-                return fmt[:idx], instr, fmt[idx + len(char):]
+                return fmt[:idx], instr, fmt[idx + len(char) :]
         return fmt, "", ""
 
     def _write_page_number_para(self, para, align: str, pn, qn) -> None:
         from docx.oxml import OxmlElement
 
-        align_map = {"left": WD_ALIGN_PARAGRAPH.LEFT, "center": WD_ALIGN_PARAGRAPH.CENTER, "right": WD_ALIGN_PARAGRAPH.RIGHT}
+        align_map = {
+            "left": WD_ALIGN_PARAGRAPH.LEFT,
+            "center": WD_ALIGN_PARAGRAPH.CENTER,
+            "right": WD_ALIGN_PARAGRAPH.RIGHT,
+        }
         para.alignment = align_map.get(align, WD_ALIGN_PARAGRAPH.CENTER)
 
         prefix, instr_text, suffix = self._parse_page_format(pn.format)

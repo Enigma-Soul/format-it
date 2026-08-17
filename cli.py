@@ -4,7 +4,7 @@ import argparse
 import shutil
 from pathlib import Path
 
-from libs.config import FormatConfig, _DEFAULTS_PATH
+from libs.config import _DEFAULTS_PATH, FormatConfig
 from libs.converter import FormatConverter
 from libs.user_interaction import PrintUserInteraction
 
@@ -23,13 +23,15 @@ def main() -> None:
         help="输入 .docx 文件路径",
     )
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         type=Path,
         default=None,
         help="输出 .docx 路径（默认: output/{输入名}_formatted.docx）",
     )
     parser.add_argument(
-        "-c", "--config",
+        "-c",
+        "--config",
         type=Path,
         default=None,
         help="配置文件路径（默认: configs/default.toml）",

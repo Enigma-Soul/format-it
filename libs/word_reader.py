@@ -90,10 +90,12 @@ class WordReader:
                 italic=font.italic or False,
                 color_rgb=color_rgb,
             )
-            runs.append(InlineRun(
-                text=run.text,
-                font=font_info,
-            ))
+            runs.append(
+                InlineRun(
+                    text=run.text,
+                    font=font_info,
+                )
+            )
         return runs
 
     def _extract_all_images(self, doc: Document, image_dir: Path) -> dict[str, Path]:

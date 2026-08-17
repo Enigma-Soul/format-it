@@ -126,16 +126,19 @@ class MarkdownReader:
                 break
         if start is None or end is None:
             return {}, lines
-        json_str = "\n".join(lines[start + 1:end])
+        json_str = "\n".join(lines[start + 1 : end])
         try:
             metadata = json.loads(json_str)
         except json.JSONDecodeError:
             metadata = {}
-        clean_lines = lines[:start] + lines[end + 1:]
+        clean_lines = lines[:start] + lines[end + 1 :]
         return metadata, clean_lines
 
     def _make_runs_from_meta(
-        self, idx: int, metadata: dict, text: str,
+        self,
+        idx: int,
+        metadata: dict,
+        text: str,
     ) -> list[InlineRun]:
         para_list = metadata.get("paragraphs", [])
         if idx < len(para_list):

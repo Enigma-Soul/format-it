@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from web.routes import router, session_manager as _  # noqa: F401
+from web.routes import router  # noqa: F401
 from web.sessions import SessionManager
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"

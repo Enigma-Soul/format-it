@@ -5,7 +5,7 @@ from pathlib import Path
 
 from libs.config import FormatConfig
 from libs.fonts import FontResolver
-from libs.models import DocumentStructure, HEADING_ROLES, ParagraphNode, ParagraphRole
+from libs.models import DocumentStructure, ParagraphRole
 
 ROLE_TO_MD_LEVEL: dict[ParagraphRole, int] = {
     ParagraphRole.TITLE: 1,
