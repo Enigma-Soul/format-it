@@ -1,6 +1,6 @@
 [project]
 name = "format-it"
-version = "0.2.1"
+version = "0.3.0"
 description = "将 Word 文档进行格式化"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,4 +15,22 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyinstaller>=6.20.0",
+    "ruff>=0.14.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle 错误
+    "W",   # pycodestyle 警告
+    "F",   # pyflakes
+    "I",   # isort import 排序
+    "UP",  # pyupgrade 语法现代化
+    "B",   # flake8-bugbear 常见缺陷
+]
+
+[tool.ruff.format]
+quote-style = "double"

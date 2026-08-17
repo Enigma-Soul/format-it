@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from libs.models import DetectedHeading
 
@@ -16,8 +15,8 @@ class UserInteraction(ABC):
     def confirm_heading_level(
         self,
         heading: DetectedHeading,
-        font_level: Optional[int],
-        sequence_level: Optional[int],
+        font_level: int | None,
+        sequence_level: int | None,
     ) -> int:
         """Resolve a conflict. -1=title, -2=subtitle, 0=not heading, 1-4=heading level."""
         ...
@@ -27,14 +26,14 @@ class UserInteraction(ABC):
         self,
         text: str,
         char_count: int,
-        font_info: Optional[str],
-    ) -> Optional[int]:
+        font_info: str | None,
+    ) -> int | None:
         """Return heading level (1-4) / -1=title / -2=subtitle, None=body."""
         ...
 
     @abstractmethod
-    def confirm_subtitle(self, text: str, font_info: Optional[str]) -> Optional[int]:
-        """Prompt user to classify the paragraph after the title. Return -2=subtitle, etc. None=body."""
+    def confirm_subtitle(self, text: str, font_info: str | None) -> int | None:
+        """Prompt user to classify the paragraph after the title. -2=subtitle, None=body."""
         ...
 
     @abstractmethod
@@ -48,12 +47,10 @@ class UserInteraction(ABC):
         ...
 
     @abstractmethod
-    def prompt_continue(self, message: str) -> bool:
-        ...
+    def prompt_continue(self, message: str) -> bool: ...
 
     @abstractmethod
-    def display_progress(self, message: str) -> None:
-        ...
+    def display_progress(self, message: str) -> None: ...
 
 
 class AutoUserInteraction(UserInteraction):
@@ -69,8 +66,8 @@ class AutoUserInteraction(UserInteraction):
     def confirm_heading_level(
         self,
         heading: DetectedHeading,
-        font_level: Optional[int],
-        sequence_level: Optional[int],
+        font_level: int | None,
+        sequence_level: int | None,
     ) -> int:
         if font_level is not None:
             return font_level
@@ -82,11 +79,11 @@ class AutoUserInteraction(UserInteraction):
         self,
         text: str,
         char_count: int,
-        font_info: Optional[str],
-    ) -> Optional[int]:
+        font_info: str | None,
+    ) -> int | None:
         return None
 
-    def confirm_subtitle(self, text: str, font_info: Optional[str]) -> Optional[int]:
+    def confirm_subtitle(self, text: str, font_info: str | None) -> int | None:
         return -2
 
     def select_input_files(self, available_files: list[str]) -> list[int]:
@@ -111,8 +108,8 @@ class SilentUserInteraction(UserInteraction):
     def confirm_heading_level(
         self,
         heading: DetectedHeading,
-        font_level: Optional[int],
-        sequence_level: Optional[int],
+        font_level: int | None,
+        sequence_level: int | None,
     ) -> int:
         if font_level is not None:
             return font_level
@@ -124,11 +121,11 @@ class SilentUserInteraction(UserInteraction):
         self,
         text: str,
         char_count: int,
-        font_info: Optional[str],
-    ) -> Optional[int]:
+        font_info: str | None,
+    ) -> int | None:
         return None
 
-    def confirm_subtitle(self, text: str, font_info: Optional[str]) -> Optional[int]:
+    def confirm_subtitle(self, text: str, font_info: str | None) -> int | None:
         return -2
 
     def select_input_files(self, available_files: list[str]) -> list[int]:
@@ -154,8 +151,8 @@ class PrintUserInteraction(UserInteraction):
     def confirm_heading_level(
         self,
         heading: DetectedHeading,
-        font_level: Optional[int],
-        sequence_level: Optional[int],
+        font_level: int | None,
+        sequence_level: int | None,
     ) -> int:
         if font_level is not None:
             return font_level
@@ -167,11 +164,11 @@ class PrintUserInteraction(UserInteraction):
         self,
         text: str,
         char_count: int,
-        font_info: Optional[str],
-    ) -> Optional[int]:
+        font_info: str | None,
+    ) -> int | None:
         return None
 
-    def confirm_subtitle(self, text: str, font_info: Optional[str]) -> Optional[int]:
+    def confirm_subtitle(self, text: str, font_info: str | None) -> int | None:
         return -2
 
     def select_input_files(self, available_files: list[str]) -> list[int]:

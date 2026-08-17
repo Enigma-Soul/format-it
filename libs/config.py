@@ -5,6 +5,8 @@ from pathlib import Path
 
 import tomli_w
 
+from libs.models import HEADING_ROLES, ParagraphRole
+
 try:
     import tomllib
 except ModuleNotFoundError:
@@ -90,7 +92,6 @@ class FormatConfig:
         return cls.from_toml(_DEFAULTS_PATH)
 
     def font_for_role(self, role: ParagraphRole, heading_level: int | None = None) -> FontSpec:
-        from libs.models import HEADING_ROLES, ParagraphRole
         if role == ParagraphRole.TITLE:
             return self.title_font
         if role == ParagraphRole.SUBTITLE:

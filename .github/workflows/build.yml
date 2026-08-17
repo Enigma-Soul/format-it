@@ -19,11 +19,20 @@ jobs:
         run: |
           VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          if git tag -l "v$VERSION" | grep -q .; then
+          # 查远端 tag,浅克隆下本地 tag 不可靠
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
+          # 提取 CHANGELOG 中该版本条目作为发版说明
+          BODY=$(tr -d '\r' < CHANGELOG.md | awk -v ver="# $VERSION" '$0 == ver { found = 1; next } found && /^# / { exit } found { print }')
+          if [ -z "$BODY" ]; then BODY="Release v$VERSION"; fi
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "$BODY"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Install uv
         if: steps.version.outputs.exists == 'false'
@@ -54,6 +63,7 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item README.md dist/format-it/
+          Copy-Item CHANGELOG.md dist/format-it/
           Copy-Item LICENSE dist/format-it/
 
       - name: Package as zip
@@ -68,4 +78,5 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.tag }}
+          body: ${{ steps.version.outputs.body }}
           files: dist/format-it_${{ steps.version.outputs.tag }}.zip

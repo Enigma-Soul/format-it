@@ -86,9 +86,7 @@ async def upload_file(file: UploadFile, config: str = "default.toml"):
         converter = FormatConverter(fmt_config, ui)
 
         loop = asyncio.get_event_loop()
-        md_path = await loop.run_in_executor(
-            None, converter.convert_word_to_markdown, input_path
-        )
+        md_path = await loop.run_in_executor(None, converter.convert_word_to_markdown, input_path)
 
         session.md_file = md_path
         md_text = md_path.read_text(encoding="utf-8")
@@ -106,7 +104,7 @@ async def upload_file(file: UploadFile, config: str = "default.toml"):
     except Exception as e:
         session.status = "error"
         session.log.append(f"错误: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/generate")
@@ -146,7 +144,7 @@ async def generate_word(request: dict):
             "filename": result_path.name,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/download/{session_id}")

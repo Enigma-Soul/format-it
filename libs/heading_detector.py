@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Optional
 
 from libs.config import FormatConfig
 from libs.fonts import FontResolver
 from libs.models import (
+    HEADING_ROLES,
     DetectedHeading,
     DocumentStructure,
-    HEADING_ROLES,
     ParagraphNode,
     ParagraphRole,
 )
@@ -52,21 +51,33 @@ class HeadingDetector:
         use_line_length: bool = True,
     ) -> list[DetectedHeading]:
         size_freq = self._analyze_font_size_frequency(paragraphs) if use_font_size else {}
-        font_levels = self._classify_by_font_size(paragraphs, size_freq) if use_font_size else [None] * len(paragraphs)
-        seq_levels = self._classify_by_sequence(paragraphs) if use_sequence else [None] * len(paragraphs)
-        line_flags = self._classify_by_line_length(paragraphs) if use_line_length else [False] * len(paragraphs)
+        font_levels = (
+            self._classify_by_font_size(paragraphs, size_freq)
+            if use_font_size
+            else [None] * len(paragraphs)
+        )
+        seq_levels = (
+            self._classify_by_sequence(paragraphs) if use_sequence else [None] * len(paragraphs)
+        )
+        line_flags = (
+            self._classify_by_line_length(paragraphs)
+            if use_line_length
+            else [False] * len(paragraphs)
+        )
 
         results: list[DetectedHeading] = []
         for i, para in enumerate(paragraphs):
-            results.append(DetectedHeading(
-                paragraph_index=i,
-                text=para.text,
-                char_count=len(para.text),
-                detected_font_name=self._get_dominant_font_name(para),
-                sequence_match_level=seq_levels[i],
-                font_size_match_level=font_levels[i],
-                line_length_match=line_flags[i],
-            ))
+            results.append(
+                DetectedHeading(
+                    paragraph_index=i,
+                    text=para.text,
+                    char_count=len(para.text),
+                    detected_font_name=self._get_dominant_font_name(para),
+                    sequence_match_level=seq_levels[i],
+                    font_size_match_level=font_levels[i],
+                    line_length_match=line_flags[i],
+                )
+            )
         return results
 
     def resolve_conflicts(
@@ -89,7 +100,9 @@ class HeadingDetector:
                 h.final_level = seq_lv
             elif h.line_length_match:
                 result = ui.confirm_unknown_paragraph(
-                    h.text, h.char_count, h.detected_font_name,
+                    h.text,
+                    h.char_count,
+                    h.detected_font_name,
                 )
                 h.final_level = result
             else:
@@ -147,7 +160,8 @@ class HeadingDetector:
     # --- Font size frequency ---
 
     def _analyze_font_size_frequency(
-        self, paragraphs: list[ParagraphNode],
+        self,
+        paragraphs: list[ParagraphNode],
     ) -> dict[float, int]:
         counter: Counter[float] = Counter()
         for para in paragraphs:
@@ -162,7 +176,7 @@ class HeadingDetector:
         self,
         paragraphs: list[ParagraphNode],
         size_freq: dict[float, int],
-    ) -> list[Optional[int]]:
+    ) -> list[int | None]:
         if not size_freq:
             return [None] * len(paragraphs)
 
@@ -170,7 +184,7 @@ class HeadingDetector:
         title_size = self._config.title_font.size_pt
         tolerance = self._config.detection.font_size_tolerance_pt
 
-        results: list[Optional[int]] = []
+        results: list[int | None] = []
         for para in paragraphs:
             if not para.text.strip():
                 results.append(None)
@@ -220,9 +234,10 @@ class HeadingDetector:
     # --- Sequence number matching ---
 
     def _classify_by_sequence(
-        self, paragraphs: list[ParagraphNode],
-    ) -> list[Optional[int]]:
-        results: list[Optional[int]] = []
+        self,
+        paragraphs: list[ParagraphNode],
+    ) -> list[int | None]:
+        results: list[int | None] = []
         for para in paragraphs:
             text = para.text.strip()
             if not text:
@@ -239,10 +254,13 @@ class HeadingDetector:
     # --- Line length ---
 
     def _classify_by_line_length(
-        self, paragraphs: list[ParagraphNode],
+        self,
+        paragraphs: list[ParagraphNode],
     ) -> list[bool]:
         threshold = self._config.detection.line_length_threshold
-        return [len(para.text.strip()) < threshold and bool(para.text.strip()) for para in paragraphs]
+        return [
+            len(para.text.strip()) < threshold and bool(para.text.strip()) for para in paragraphs
+        ]
 
     # --- Title detection ---
 
@@ -281,7 +299,7 @@ class HeadingDetector:
         # Collect subtitle candidates: non-empty paragraphs immediately after title
         # Stop at the first real heading (H1-H4 with a sequence number) or BODY content
         candidates: list[ParagraphNode] = []
-        for para in doc.paragraphs[title_idx + 1:]:
+        for para in doc.paragraphs[title_idx + 1 :]:
             if not para.text.strip():
                 continue
             # A heading with a matched sequence number is a real heading, stop here
@@ -312,7 +330,7 @@ class HeadingDetector:
     # --- Sequence formatting helpers ---
 
     @staticmethod
-    def _strip_existing_sequence(text: str, level: int) -> tuple[str, Optional[int]]:
+    def _strip_existing_sequence(text: str, level: int) -> tuple[str, int | None]:
         text = text.strip()
         pattern = SEQUENCE_PATTERNS.get(level)
         if not pattern:
@@ -321,7 +339,7 @@ class HeadingDetector:
         if not m:
             return text, None
         prefix = m.group()
-        rest = text[m.end():]
+        rest = text[m.end() :]
 
         if level in (1, 2):
             nums = EXTRACT_CN_NUM.findall(prefix)
@@ -348,7 +366,7 @@ class HeadingDetector:
     # --- Font helpers ---
 
     @staticmethod
-    def _get_dominant_font_size(para: ParagraphNode) -> Optional[float]:
+    def _get_dominant_font_size(para: ParagraphNode) -> float | None:
         if not para.runs:
             return None
         sizes: Counter[float] = Counter()
@@ -360,7 +378,7 @@ class HeadingDetector:
         return max(sizes, key=sizes.get)
 
     @staticmethod
-    def _get_dominant_font_name(para: ParagraphNode) -> Optional[str]:
+    def _get_dominant_font_name(para: ParagraphNode) -> str | None:
         if not para.runs:
             return None
         names: Counter[str] = Counter()
